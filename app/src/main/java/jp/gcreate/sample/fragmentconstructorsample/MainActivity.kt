@@ -2,13 +2,16 @@ package jp.gcreate.sample.fragmentconstructorsample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import jp.gcreate.sample.fragmentconstructorsample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private var count = 0
-    private val fragmentFactory = HasArgumentsFragmentFactory { count }
     private lateinit var binding: ActivityMainBinding
+    private val vm: MainViewModel by viewModels { ViewModelProvider.NewInstanceFactory() }
+    private val fragmentFactory = HasArgumentsFragmentFactory { vm.countLiveData.value ?: 0 }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         supportFragmentManager.fragmentFactory = fragmentFactory
@@ -16,18 +19,15 @@ class MainActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         binding.increment.setOnClickListener {
-            count++
-            replaceFragment()
+            vm.increment()
         }
         binding.decrement.setOnClickListener {
-            count--
-            replaceFragment()
+            vm.decrement()
         }
-    }
-
-    private fun replaceFragment() {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container_2, HasArgumentsFragment::class.java, null)
-            .commit()
+        vm.countLiveData.observe(this, Observer {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container_2, HasArgumentsFragment::class.java, null)
+                .commit()
+        })
     }
 }
